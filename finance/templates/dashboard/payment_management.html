@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Payment Management{% endblock %}
+{% block content %}
+<div class="payment-management-content">
+    <div class="payment-management-header">
+        <h1 class="heading">Payment Management</h1>
+    </div>
+
+    <form class="payment-form" method="POST" enctype="multipart/form-data" action="{{ url_for('dashboard.payment_management') }}">
+        <div class="form-group">
+            <label for="userId">UID</label>
+            <input type="text" id="userId" name="userId" required>
+        </div>
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" step="0.01" id="amount" name="amount" required>
+        </div>
+        <div class="form-group">
+            <label for="chequeNumber">Cheque Number</label>
+            <input type="text" id="chequeNumber" name="chequeNumber">
+        </div>
+        <div class="form-group">
+            <label for="interestRate">Monthly Interest (%)</label>
+            <input type="number" step="0.01" id="interestRate" name="interestRate" placeholder="e.g., 2.5">
+        </div>
+        <div class="form-group">
+            <label for="paymentDate">Date</label>
+            <input type="date" id="paymentDate" name="paymentDate">
+        </div>
+
+        <div class="form-group form-group-span2">
+            <label for="probationPeriod">Probation Period</label>
+            <input type="text" id="probationPeriod" name="probationPeriod" placeholder="Enter Months">
+        </div>
+        <button type="submit" class="add-payment-btn">Add Payment</button>
+    </form>
+
+    <table class="payment-table" id="paymentTable">
+        <thead>
+            <tr>
+                <th>UID</th>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Interest Rate</th>
+                <th>Pending Payment</th>
+                <th>Date</th>
+                <th>Probation Period</th>
+                <th>Cheque Number</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in payments %}
+            <tr data-status="{{ p.status|lower }}">
+                <td>{{ p.user_id }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ '%.2f'|format(p.amount) }}</td>
+                <td>{{ '%.2f'|format(p.monthly_interest) }}</td>
+                <td>{{ '%.2f'|format(p.pending) }}</td>
+                <td>{{ p.date.strftime('%Y-%m-%d') if p.date else '' }}</td>
+                <td>{{ p.probation_period }}</td>
+                <td>{{ p.cheque_number }}</td>
+                <td>{{ p.status }}</td>
+                  <td>
+                      <button class="action-btn add-txn-btn" data-payment-id="{{ p.id }}" title="Add Transaction">
+                          <i class="fas fa-plus"></i>
+                      </button>
+                      <button class="action-btn view-txn-btn" data-payment-id="{{ p.id }}" title="View Transactions">
+                          <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="action-btn delete-payment-btn" data-payment-id="{{ p.id }}" title="Delete Payment">
+                          <i class="fas fa-trash"></i>
+                      </button>
+                  </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination at bottom of page -->
+<div id="paymentPagination" style="margin-top:20px; margin-bottom:20px;"></div>
+
+    <!-- Add Transaction Modal -->
+    <div id="txnModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeTxn">&times;</span>
+            <h2>Add Transaction</h2>
+            <form id="txnForm" method="POST">
+                <div class="form-group">
+                    <label>UID</label>
+                    <input type="text" id="txnUid" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="txnName" disabled>
+                </div>
+                <div class="form-group form-group-span2">
+                    <label>Total Amount</label>
+                    <input type="text" id="txnTotal" disabled>
+                </div>
+                <div class="form-group form-group-span2">
+                    <label for="depositAmount">Deposit Amount</label>
+                    <input type="number" step="0.01" id="depositAmount" name="depositAmount" required>
+                </div>
+                <button type="submit" class="add-payment-btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Transaction Modal -->
+    <div id="txnViewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeTxnView">&times;</span>
+            <h2>Transactions</h2>
+            <table class="txn-view-table" id="txnViewTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>UID</th>
+                        <th>Name</th>
+                        <th>Total Amount</th>
+                        <th>Deposit Amount</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    const uidInput = document.getElementById("userId");
+    const nameInput = document.getElementById("name");
+
+    let debounceTimer;
+    function fetchName(){
+        const uid = uidInput.value.trim();
+        if(!uid){ nameInput.value = ""; return; }
+        fetch(`/api/customer/${encodeURIComponent(uid)}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => { if(data && data.name){ nameInput.value = data.name; }})
+          .catch(()=>{});
+    }
+
+    uidInput.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchName, 300);
+    });
+    uidInput.addEventListener("blur", fetchName);
+
+    // Transaction modal logic
+    const txnModal = document.getElementById('txnModal');
+    const txnForm = document.getElementById('txnForm');
+    const closeTxn = document.getElementById('closeTxn');
+    const txnUid = document.getElementById('txnUid');
+    const txnName = document.getElementById('txnName');
+    const txnTotal = document.getElementById('txnTotal');
+
+    const txnViewModal = document.getElementById('txnViewModal');
+    const closeTxnView = document.getElementById('closeTxnView');
+
+    document.addEventListener('click', (e) => {
+        if(e.target && e.target.classList.contains('add-txn-btn')){
+            const row = e.target.closest('tr');
+            const pid = e.target.getAttribute('data-payment-id');
+            const uid = row.children[0].textContent.trim();
+            const name = row.children[1].textContent.trim();
+            const total = row.children[2].textContent.trim();
+
+            txnUid.value = uid;
+            txnName.value = name;
+            txnTotal.value = total;
+            txnForm.action = `/payments/${pid}/transactions`;
+            txnModal.style.display = 'block';
+        }
+        if(e.target && e.target.classList.contains('view-txn-btn')){
+            const pid = e.target.getAttribute('data-payment-id');
+            fetch(`/payments/${pid}/transactions/list`)
+                .then(r => r.ok ? r.json() : [])
+                .then(rows => {
+                    const tbody = document.querySelector('#txnViewTable tbody');
+                    tbody.innerHTML = '';
+                    rows.forEach(d => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${d.date || ''}</td>
+                            <td>${d.user_id || ''}</td>
+                            <td>${d.name || ''}</td>
+                            <td>${d.total_amount != null ? Number(d.total_amount).toFixed(2) : ''}</td>
+                            <td>${d.deposit_amount != null ? Number(d.deposit_amount).toFixed(2) : ''}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    txnViewModal.style.display = 'block';
+                });
+        }
+        if(e.target && e.target.classList.contains('delete-payment-btn')){
+            const pid = e.target.getAttribute('data-payment-id');
+            if(confirm('Are you sure you want to delete this payment?')) {
+                fetch(`/payments/${pid}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if(response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to delete payment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting payment');
+                });
+            }
+        }
+    });
+
+    closeTxn.onclick = () => txnModal.style.display = 'none';
+    closeTxnView.onclick = () => txnViewModal.style.display = 'none';
+    window.onclick = (e) => {
+        if(e.target === txnModal) txnModal.style.display = 'none';
+        if(e.target === txnViewModal) txnViewModal.style.display = 'none';
+    };
+});
+</script>
+{% endblock %}
+
+

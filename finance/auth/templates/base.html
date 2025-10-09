@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Finance App{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+   
+
+</head>
+<body>
+    <div class="sidebar">
+    <h2>Easy Finance</h2>
+    {% if current_user.is_authenticated %}
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('dashboard.users') }}">User Management</a></li>
+            <li><a href="{{ url_for('dashboard.payment_management') }}">Payment Management</a></li>
+            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+        </ul>
+    {% else %}
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+        </ul>
+    {% endif %}
+</div>
+
+     
+    
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    {% block scripts %}
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% endblock %}
+
+</body>
+</html>

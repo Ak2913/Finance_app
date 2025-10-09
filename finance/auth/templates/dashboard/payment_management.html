@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Payment Management{% endblock %}
+
+{% block content %}
+<div class="payment-management-content">
+    <div class="payment-management-header">
+        <h1 class="heading">Payment Management</h1>
+    </div>
+
+    <form class="payment-form" method="POST" enctype="multipart/form-data"
+          action="{{ url_for('dashboard.payment_management') }}">
+        <div class="form-group">
+            <label for="userId">UID</label>
+            <input type="text" id="userId" name="userId" required>
+        </div>
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" step="0.01" id="amount" name="amount" required>
+        </div>
+        <div class="form-group">
+            <label for="monthlyinterest">Monthlhy Interest (%)</label>
+            <input type="number" step="0.01" id="monthlyinterest" name="monthlyinterest"placeholder="e.g., 2.5">
+        </div>
+        <div class="form-group">
+            <label for="paymentDate">Date</label>
+            <input type="datetime-local" id="paymentDate" name="paymentDate" placeholder="Enter payment Date">
+        </div>
+        <div class="form-group form-group-span2">
+            <label for="probationPeriod">Probation Period</label>
+            <input type="text" id="probationPeriod" name="probationPeriod" placeholder="Enter Months">
+        </div>
+        <button type="submit" class="add-payment-btn">Add Payment</button>
+    </form>
+
+   
+    <table class="payment-table" id="paymentTable">
+        <thead>
+        <tr>
+            <th>UID</th>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Interest Rate</th>
+            <th>Pending</th>
+            <th>Date</th>
+            <th>Probation</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in payments %}
+        <tr data-payment-id="{{ p.id }}">
+            <td>{{ p.user_id }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ "%.2f"|format(p.amount) }}</td>
+            <td>{{ "%.2f"|format(p.interest_rate) }}</td>
+            <td>{{ "%.2f"|format(p.pending) }}</td>
+            <td>{{ p.date.strftime('%d-%m-%y %H:%M') if p.date else '' }}</td>
+            <td>{{ p.probation_period }}</td>
+            <td>{{ p.status }}</td>
+            <td>
+                <button class="action-btn add-txn-btn" data-payment-id="{{ p.id }}">Add Txn</button>
+                <button class="action-btn view-txn-btn" data-payment-id="{{ p.id }}">View</button>
+                <button class="action-btn delete-payment-btn" data-payment-id="{{ p.id }}">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div id="paymentPagination" class="pagination-controls"></div>
+</div>
+
+
+<div id="txnModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeTxn">&times;</span>
+        <h2>Add Transaction</h2>
+        <form id="txnForm" method="POST">
+            <label>UID</label><input type="text" id="txnUid" disabled>
+            <label>Name</label><input type="text" id="txnName" disabled>
+            <label>Total</label><input type="text" id="txnTotal" disabled>
+            <label for="depositAmount">Deposit</label>
+            <input type="number" step="0.01" id="depositAmount" name="depositAmount" required>
+            <label for="pendingAmount">Pending</label>
+            <input type="number" step="0.01" id="pendingAmount" name="pendingAmount" required>
+            <button type="submit" class="add-payment-btn">Save</button>
+        </form>
+    </div>
+</div>
+
+<div id="txnViewModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeTxnView">&times;</span>
+        <h2>Transactions</h2>
+        <table id="txnViewTable">
+            <thead>
+            <tr><th>Date</th><th>UID</th><th>Name</th><th>Total</th><th>Deposit</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+ {% block scripts %}
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}
+
+
+

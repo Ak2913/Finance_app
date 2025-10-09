@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>Dashboard Overview</h1>
+    </div>
+    <div class="welcome-msg">
+        <p>Welcome, {{ user.username }}!</p>
+    </div>
+</div>
+
+<div class="filters">
+    <form id="dateFilterForm" onsubmit="return false;">
+        <label for="fromDate">From:</label>
+        <input type="date" name="fromDate" id="fromDate">
+
+        <label for="toDate">To:</label>
+        <input type="date" name="toDate" id="toDate">
+
+        <label for="range">Quick Filter:</label>
+        <select name="range" id="range">
+            <option value="">-- Select --</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="six_month">Six Month</option>
+            <option value="yearly">Yearly</option>
+        </select>
+
+        <button type="button" onclick="fetchStats()">Apply</button>
+    </form>
+</div>
+
+<div class="dashboard-title">
+    <h1>User Statistics</h1>
+</div>
+
+<div class="dashboard-cards">
+    <div class="card">
+        <h3>Total Investment</h3>
+        <p id="total-investment">{{ total_investment|default(0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Total Profit</h3>
+        <p id="total-profit">{{ total_profit|default(0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Average Percentage</h3>
+        <p id="avg-percentage">{{ avg_percentage|default(0) }}%</p>
+    </div>
+    <div class="card">
+        <h3>Remaining Principal Amount</h3>
+        <p id="Remaining-amount">{{ remaining_amount|default(0) }}</p>
+    </div>
+</div>
+
+<div class="dashboard-title">
+    <h1>Customer Statistics</h1>
+</div>
+
+<div class="dashboard-cards">
+    <div class="card">
+        <h3>Total Customers</h3>
+        <p id="total-customers">{{ total_customers|default(0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Completed Amount</h3>
+        <p id="completed-amount">{{ completed_amount|default(0) }}</p>
+    </div>
+    <div class="card">
+        <h3>Pending Payment</h3>
+        <p id="pending-payment">{{ pending_payment|default(0) }}</p>
+    </div>
+</div>
+
+{% endblock %}

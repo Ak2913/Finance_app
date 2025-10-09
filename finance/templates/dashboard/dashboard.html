@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-title"><h1>Dashboard Overview</h1></div>
+  <div class="welcome-msg"><p>Welcome, {{ user.username if user else '' }}</p></div>
+  </div>
+<!-- Date range filter -->
+<form method="GET" action="{{ url_for('dashboard.dashboard') }}" class="filters-row">
+  <div class="inline-group">
+    <label for="fromDate">From date</label>
+    <input type="date" id="fromDate" name="fromDate" value="{{ request.args.get('fromDate','') }}">
+  </div>
+  <div class="inline-group">
+    <label for="toDate">To date</label>
+    <input type="date" id="toDate" name="toDate" value="{{ request.args.get('toDate','') }}">
+  </div>
+  <div class="inline-group">
+    <label for="range">Quick filter</label>
+    <select id="range" name="range">
+      <option value="">-- Select --</option>
+      <option value="monthly" {{ 'selected' if request.args.get('range')=='monthly' else '' }}>Monthly</option>
+      <option value="quarterly" {{ 'selected' if request.args.get('range')=='quarterly' else '' }}>Quarterly</option>
+      <option value="six_month" {{ 'selected' if request.args.get('range')=='six_month' else '' }}>Half-Yearly</option>
+      <option value="yearly" {{ 'selected' if request.args.get('range')=='yearly' else '' }}>Yearly</option>
+    </select>
+    <button type="submit" class="filter-apply-btn">Apply</button>
+  </div>
+  </form>
+
+<h2 class="heading" style="margin: 16px 0 8px 0; color: #2c3e50; margin-top: 20px; margin-left: 20px;">User statistics</h2>
+
+<div class="dashboard-cards">
+  <div class="card"><h3>Total Investment</h3><p id="totalInvestmentValue">{{ '%.2f'|format(total_investment) }}</p></div>
+  <div class="card"><h3>Total Profit</h3><p>{{ '%.2f'|format(total_profit) }}</p></div>
+  <div class="card"><h3>Avg Percentage</h3><p>{{ '%.2f'|format(avg_percentage) }}%</p></div>
+  <div class="card"><h3>Remaining Amount</h3><p>{{ '%.2f'|format(remaining_amount) }}</p></div>
+</div>
+
+<h2 class="heading" style="margin: 16px 0 8px 0; color: #2c3e50; margin-top: 20px; margin-left: 20px;">Customer Statistics</h2>
+
+  <div class="dashboard-cards">
+    <div class="card"><h3>Total Customers</h3><p>{{ total_customers }}</p></div>
+    <div class="card"><h3>Completed Payment</h3><p>{{ completed_payment }}</p></div>
+    <div class="card"><h3>Pending Payment</h3><p>{{ pending_payment }}</p></div>
+  
+  </div>
+{% endblock %}
+

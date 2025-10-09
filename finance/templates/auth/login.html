@@ -1,0 +1,19 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-container">
+    <h2>Login</h2>
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      {{ form.hidden_tag() if form is defined }}
+      <label for="username">Username</label>
+      {{ form.username(size=32) if form is defined else '' }}
+      <label for="password">Password</label>
+      {{ form.password(size=32) if form is defined else '' }}
+      {{ form.submit(class_='btn') if form is defined else '<input type="submit" value="Login">'|safe }}
+    </form>
+    <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a></p>
+  </div>
+  </div>
+{% endblock %}
+
