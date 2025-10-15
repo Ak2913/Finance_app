@@ -10,21 +10,31 @@
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Enter status (Active/Inactive)">
+        <input type="text" id="searchInput" placeholder="Search by Name, Email, Contact">
         <button id="searchBtn">Search</button>
         <button id="clearSearchBtn">Clear</button>
+        <label>Status:
+        <select id="statusFilter">
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+    </label>
     </div>
 
     <table class="user-table" id="userTable">
         <thead>
             <tr>
                 <th>User ID</th>
-                <th>Name</th>
+                 <th id="sortName" class="sortable">Name <i class="fa-solid fa-sort"></i></th>
                 <th>Address</th>
-                <th>Email</th>
+                <th id="sortEmail" class="sortable">Email <i class="fa-solid fa-sort"></i></th>
                 <th>Contact</th>
-                <th>Status</th>
+                <th id="sortStatus" class="sortable">Status <i class="fa-solid fa-sort"></i></th>
                 <th>Action</th>
+                <th style="display:none">Documents</th>
+
+
             </tr>
         </thead>
         <tbody>

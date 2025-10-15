@@ -154,6 +154,15 @@ def users():
         db.session.add(customer)
         db.session.commit()
 
+        return jsonify(success=True, user={
+            "userId": customer.user_id,
+            "name": customer.name,
+            "address": customer.address,
+            "email": customer.email,
+            "contact": customer.contact,
+            "status": customer.status
+        })
+
         return redirect(url_for("dashboard.users"))
 
     customers = Customer.query.all()
@@ -196,20 +205,31 @@ def edit_user():
         photo_file.save(os.path.join(UPLOAD_FOLDER, photo_filename))
 
     customer = Customer.query.filter_by(user_id=original_user_id).first()
-    if customer:
-        customer.user_id = user_id
-        customer.name = name
-        customer.address = address
-        customer.email = email
-        customer.contact = contact
-        customer.status = status
-        if id_filename is not None:
-            customer.id_proof = id_filename
-        if photo_filename is not None:
-            customer.photo = photo_filename
-        db.session.commit()
+    if not customer:
+        return jsonify(success=False, message="User not found")
 
-    return redirect(url_for("dashboard.users"))
+    customer.user_id = user_id
+    customer.name = name
+    customer.address = address
+    customer.email = email
+    customer.contact = contact
+    customer.status = status
+    if id_filename is not None:
+            customer.id_proof = id_filename
+    if photo_filename is not None:
+            customer.photo = photo_filename
+    db.session.commit()
+    
+    return jsonify(success=True, user={
+        "userId": customer.user_id,
+        "name": customer.name,
+        "address": customer.address,
+        "email": customer.email,
+        "contact": customer.contact,
+        "status": customer.status
+    })
+
+    
 
 
 @dashboard_bp.route("/payment_management")
@@ -287,6 +307,9 @@ def add_payment():
 def create_transaction(payment_id: int):
     payment = Payment.query.get_or_404(payment_id)
     deposit_amount = float(request.form.get("depositAmount") or 0)
+    total_amount_with_interest = payment.amount + (payment.amount * payment.monthly_interest / 100)
+    payment.pending = max(total_amount_with_interest - deposit_amount, 0)
+
     txn = Transaction(
         payment_id=payment.id,
         user_id=payment.user_id,
@@ -306,35 +329,37 @@ def create_transaction(payment_id: int):
     else:
         payment.status = "Pending"
     db.session.commit()
-    return redirect(url_for('dashboard.payment_management'))
+
+    return jsonify(success=True, pending=pending, status=payment.status)
+
+
 
 
 @dashboard_bp.route("/payments/<int:payment_id>/transactions/list")
 @login_required
 def list_transactions(payment_id: int):
     txns = Transaction.query.filter_by(payment_id=payment_id).order_by(Transaction.date.asc()).all()
-    if not txns:
-        return jsonify([])
-    return jsonify([
+    result = [
         {
-            "user_id": t.user_id,
-            "name": t.name,
-            "total_amount": t.total_amount,
-            "deposit_amount": t.deposit_amount,
-            "date": t.date.strftime('%Y-%m-%d %H:%M')
-        }
-        for t in txns
-    ])
+            "date": txn.date.strftime('%Y-%m-%d') if txn.date else "",
+            "user_id": txn.payment.user_id,
+            "name": txn.payment.name,
+            "total_amount": txn.payment.amount + (txn.payment.amount * txn.payment.monthly_interest * (txn.payment.probation_period or 0) / 100),
+            "deposit_amount": txn.deposit_amount
+        } for txn in txns
+    ]
+    return jsonify(result)
 
 
-@dashboard_bp.route("/payments/<int:payment_id>/delete", methods=["POST"])
-@login_required
-def delete_payment(payment_id: int):
-    payment = Payment.query.get_or_404(payment_id)
-    Transaction.query.filter_by(payment_id=payment.id).delete()
+@dashboard_bp.route("/payments/<int:pid>/delete", methods=["POST"])
+def delete_payment(pid):
+    payment = Payment.query.get(pid)
+    if not payment:
+        return jsonify(success=False, message="Payment not found"), 404
     db.session.delete(payment)
     db.session.commit()
-    return redirect(url_for('dashboard.payment_management'))
+    return jsonify(success=True)
+
 
 
 @dashboard_bp.route("/api/customer/<user_id>")

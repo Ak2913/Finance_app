@@ -35,6 +35,7 @@ class Payment(db.Model):
     status = db.Column(db.String(20), nullable=False, default="Pending")
     interest_rate = db.Column(db.Float, nullable=True, default=0.0)
     pending_amount = db.Column(db.Float, nullable=True, default=0.0)
+    transactions = db.relationship("Transaction", backref="payment", cascade="all, delete")
 
 
 
